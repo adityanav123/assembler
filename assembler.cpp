@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
+#include <time.h>
 #include <unordered_map>
 // #include <bits/stdc++.h>
 using namespace std;
@@ -396,13 +397,68 @@ class Assembler
     int chhCount;
     int location;
     unordered_map<string, int> indexes;
+    //unordered_map<string, int> variables;
 
   public:
     int isError;
     //Assembler() { file3.open("AssemblyLanguage.txt"); }
 
+    void firstPass(HashTable H)
+    {
+        int locCtr = -1;
+        file3.open("AssemblyLanguage.txt");
+        while (file3)
+        {
+            getline(file3, input);
+            v.push_back(input);
+        }
+        for (vector<string>::iterator it = v.begin(); it != v.end(); ++it)
+        {
+            istringstream iss(*it);
+            vector<string> result;
+            for (string s; iss >> s;)
+                result.push_back(s);
+
+            string key = result[0];
+
+            if (key == "START")
+            {
+                locCtr = stoi(result[1]); // pointing to start address
+            }
+            else
+
+                if (key == "MOV" || key == "ADD" || key == "CMP")
+            {
+                locCtr += 4;
+            }
+            else if (key == "JUMP")
+            {
+                locCtr += 2;
+            }
+
+            else if (key.back() == ':')
+            {
+                // indexed statement
+                string new_key = key;
+                new_key.resize(new_key.size() - 1);
+                indexes[new_key] = locCtr;
+            }
+            else if (key == "BYTE" || key == "WORD" || key == "RESW" || key == "RESB")
+            {
+                if (result[1].size() != 1)
+                {
+                    // variable
+                    H.insertMne(result[1], -1, locCtr, -1);
+                }
+            }
+        }
+        // FIRST PASS
+    }
+
     void readCode(HashTable H)
     {
+
+        firstPass(H);
 
         isError = 0;
         file3.open("AssemblyLanguage.txt");
@@ -434,12 +490,6 @@ class Assembler
 
             if (key == "BYTE" || key == "RESB" || key == "RESW" || key == "WORD")
             { // variable declared
-                if (H.searchHash(result[1]) != 1)
-                {
-                    string s = result[1];
-                    //s.resize(s.size() - 1);
-                    H.insertMne(s, -1, location, 2); // variable has to be inserted in the hash table
-                }
                 if (key == "BYTE" || key == "WORD")
                 {
                     location += 4;
@@ -482,35 +532,26 @@ class Assembler
             {
 
                 string pri = result[0];
-                if (pri.back() == ':') // insert into TABLE
-                {                      // chh is there ,
-                    chhCount++;
+                if (pri.back() == ':')
+                {
+                    // indexed value already stored in first pass
                     key = result[1];
-                    // priing for the key
                     int operands = H.retNoofOperands(key);
                     if (operands != result.size() - 2)
                     {
                         errorType = 1;
                         errorHandler(errorType, lineNumber);
                     }
-                    pri.resize(pri.size() - 1);
-                    H.insertReg(pri, to_string(location));
-                    //cout << " pri : " << pri <<"\n";
-                    // inserting the chh into the hash table Mnemonics
-                    H.insertMne(pri, 100, 0, 1); // for further use
                 }
                 if (key == "JUMP")
                 {
-                    chhCount++;
-                    if (H.searchHash(result[1]) == 0)
+                    unordered_map<string, int>::const_iterator got = indexes.find(result[1]);
+                    if (got == indexes.end())
                     {
                         errorType = 2;
                         errorHandler(errorType, lineNumber);
                     }
-
-                    indexes[result[1]] = location;
                     location += 2;
-
                 }
                 if (key == "END")
                 {
@@ -574,31 +615,24 @@ class Assembler
     }
 
     void ObjectModulePseudo(HashTable H)
-    { // CONVERTING TO OBJECT MODULE IF CODE VALIDATED SUCCESSFULLY.
-        //cout << "HELLO\n";
+    { 
         string input;
         vector<string> v1;
         fstream f1;
         f1.open("AssemblyLanguage.txt");
-        //cout << f1 << "\n";
         while (f1)
         {
-            //cout << "co\n";
             getline(f1, input);
             v1.push_back(input);
-            //cout << input << "\n";
         }
         f1.close();
         for (vector<string>::iterator itr = v1.begin(); itr != v1.end(); itr++)
         {
 
             string opCode, operand1, operand2;
-            //cout << "hi\n";
             int chhCount = 0;
             int locCtr;
             istringstream iss(*itr);
-            // parsing a single line
-            // parsed line stored in the vector result.
             vector<string> result;
             for (string s; iss >> s;)
                 result.push_back(s);
@@ -607,28 +641,24 @@ class Assembler
             if (key.back() == ':')
             {
                 cout << key << locCtr << "\n";
-                //key = result[1];
             }
 
             if (key == "START")
             {
-                //cout << H.retMachine_Code(key, 1) << " " << result[1] << "\n";
-                locCtr = stoi(result[1]); // starting address of the program stored in the memory. // string to int
+                locCtr = stoi(result[1]); // string to int
                 locCtr += 2;
             }
             else if (key == "END")
             {
-               // cout << "EOF\n";
+                // cout << "EOF\n";
                 return;
             }
             else if (key == "BYTE" || key == "RESB")
             {
-                //locCtr++;
+                locCtr += 4;
                 if (key == "BYTE")
                 {
                     cout << result[1] << ", " << H.retNoofOperands(result[1]) << "\n";
-                    // variable - direct , no need.
-                    //cout << result[2][1] << "\n"; // printing the actual value of the variable
                 }
                 else
                 {
@@ -645,102 +675,153 @@ class Assembler
             }
             else if (key == "JUMP")
             {
-                if(isError == true) {
+                if (isError == true)
+                {
                     cout << result[1] << " Not declared in the Scope!\n";
                 }
-                else 
-                cout << result[1] << " " << indexes[result[1]] << "\n";
+                else
+                    cout << result[1] << " " << indexes[result[1]] << "\n";
             }
             else if (key == "ADD" || key == "SUB")
             {
                 locCtr += 4;
-                // cout << H.retMachine_Code(key, 1) << " ";
-                // operand1 = result[1];
-                // operand2 = result[2];
-
-                // opCode = key;
-                // if(opCode == result[1]) {
-                //     operand1 = result[2];
-                //     operand2 = result[3];
-                // }
-                // string s = operand1;
-                // s.resize(s.size() - 1);
-                // if (H.searchHash(s) == 1)
-                // {
-                //     if(s.size() == 1) // i.e. register 
-                //         cout << H.retBinCode(s) << " ";
-                //     else  // variable 
-                //         cout << H.retNoofOperands(s) << " ";
-                // }
-
-                // second operand
-                // if(operand2[0] == '#') {
-                //     cout << operand2[1] << "\n";
-                // }
-                // else if(operand2.size() == 1) {
-                //     cout << H.retBinCode(operand2) << "\n";
-                // }
-                // else {
-                //     // variable 
-                //     cout << H.retNoofOperands(operand2) << "\n";
-                // }
             }
-            if(key == "ADD") {
-                locCtr += 4;
-            }else if(key == "MUL") {
+            else if (key == "MUL")
+            {
                 locCtr += 2;
-            }else if(key == "MOV") {
+            }
+            else if (key == "MOV")
+            {
                 locCtr += 2;
-            }else if(key == "INC") {
+            }
+            else if (key == "INC")
+            {
                 locCtr += 1;
             }
-            // else if (key == "MUL")
-            // {
-            //     // no operand 2 
-            //     // opCode = key;
-            //     // cout << H.retMachine_Code(opCode, 1) << " ";
-            //     // operand1 = result[1];
-            //     // if(opCode == result[1]) {
-            //     //     operand1 = result[2];
-            //     // }
-            //     // if(operand1.size() == 1) {
-            //     //     cout << H.retBinCode(operand1) << "\n";
-            //     // }else {
-            //     //     cout << H.retNoofOperands(operand1) << "\n";
-            //     // }
+        }
+    }
 
-            // }
-            // else if (key == "MOV")
-            // {
+    string decToBinary(int toConv) // decimal to binary conversion
+    {
+        string binaryOut, revBinaryOut;
+        while (toConv >= 1)
+        {
+            if (toConv % 2 == 0)
+                binaryOut += "0";
+            else
+                binaryOut += "1";
+            toConv /= 2;
+        }
+        for (int i = binaryOut.length(); i >= 0; i--)
+        {
+            revBinaryOut += binaryOut[i];
+        }
+        return revBinaryOut;
+    }
+    void objectModule(HashTable H)
+    {
+        string input;
+        vector<string> v1;
+        fstream f1;
+        f1.open("AssemblyLanguage.txt");
+        //cout << f1 << "\n";
+        while (f1)
+        {
+            //cout << "co\n";
+            getline(f1, input);
+            v1.push_back(input);
+            //cout << input << "\n";
+        }
+        f1.close();
+        for (vector<string>::iterator itr = v1.begin(); itr != v1.end(); itr++)
+        {
+            string key;
+            fstream objFile;
+            objFile.open("assembler.obj");
+            string opCode, operand1, operand2;
+            int chhCount = 0;
+            int locCtr;
+            istringstream iss(*itr);
+            vector<string> result;
+            for (string s; iss >> s;)
+                result.push_back(s);
 
-            //     opCode = key;
-            //     operand1 = result[1];
-            //     operand2 = result[2];
-            //     if(opCode == result[1]) {
-            //         operand1 = result[2];
-            //         operand2 = result[3];
-            //     }
-            //     cout << H.retMachine_Code(opCode, 1) << " ";
-            //     operand1.resize(operand1.size() - 1);
-            //     //cout << operand1 << "\n";
-            //     if(operand1.size() == 1) {
-            //         // register 
-            //         cout << H.retBinCode(operand1) << " ";
-            //     } else if(operand1.size() > 1) {
-            //         // variable 
-            //         cout << H.retNoofOperands(operand1) << " ";
-            //     }
+            if (result[0].back() == ':')
+            {
+                key = result[1];
+            }
 
-            //     if(operand2[0] == '#') {
-            //         // direct value 
-            //         cout << operand2[1] << "\n";
-            //     }else 
-            //     if(operand2.size() == 1) {
-            //         cout << H.retBinCode(operand2) << "\n";
-            //     }else if(operand2.size() > 1){
-            //         cout << H.retNoofOperands(operand2) << "\n";
-            //     }
-            // }
+            if (key == "START")
+            {
+                cout << "OBJ` ";
+                objFile << "OBJ` 15102018` 1530’ " << result[1] << "\n";
+                cout << "15102018` 1530’ " << result[1] << "\n";
+            }
+            else if (key == "BYTE" || key == "WORD")
+            {
+                // convert to binary then print
+                string temp = result[2];
+                int x = (int)temp[1] - 48;
+                objFile << decToBinary(x) << "`\n";
+                cout << decToBinary(x) << "`\n";
+            }
+            else if (key == "ADD" || key == "MOV")
+            {
+                cout << H.retMachine_Code(key, 1) << "` ";
+                objFile << H.retMachine_Code(key, 1) << "` ";
+                if (key == result[1])
+                { // first operand
+                    // indexed value
+                    string temp = result[2];
+                    temp.resize(temp.size() - 1);
+
+                    if (temp.size() == 1)
+                    {
+                        // register
+                        cout << H.retBinCode(temp) << "` ";
+                        objFile << H.retBinCode(temp) << "` ";
+                    }
+                    else
+                    {
+                        cout << H.retNoofOperands(temp) << "` ";
+                        objFile << H.retNoofOperands(temp) << "` ";
+                    }
+                }
+                else if (key == result[0])
+                {
+                    string temp = result[1];
+                    temp.resize(temp.size() - 1);
+                    cout << H.retBinCode(temp) << "` ";
+                }
+
+                if (result[2][0] == '#')
+                {
+                    // immidiate operand
+                    string temp = result[2];
+                    int x = (int)temp[1] - 48;
+                    cout << decToBinary(x) << "`\n";
+                }
+                else if (result[2].size() == 1)
+                {
+                    // register
+                    cout << H.retBinCode(result[2]) << "`\n";
+                    objFile << H.retBinCode(result[2]) << "`\n";
+                }
+                else
+                {
+                    cout << H.retNoofOperands(result[2]) << "`\n";
+                    objFile << H.retNoofOperands(result[2]) << "`\n";
+                }
+            }
+
+            else if (key == "JUMP")
+            {
+
+                cout << H.retMachine_Code(key, 1) << "` ";
+                objFile << H.retMachine_Code(key, 1) << "` ";
+                cout << indexes[result[1]] << "`\n";
+                objFile << indexes[result[1]] << "`\n";
+            }
         }
     }
 };
@@ -751,18 +832,12 @@ int main()
     insertTableValues(H);
 
     //H.viewHashTable();
-    // cout << "Saving "
-    //      << "\n";
     HTWrapper htw;
     htw.saveTables(H);
-   // htw.viewTables(H);
-    //cin.get();
-
-    // Assembler a;
-    // a.readFromFile(H);
+    // htw.viewTables(H);
 
     Assembler a;
-   // a.printCode();
+    // a.printCode();
     a.readCode(H);
     if (a.isError == true)
     {
@@ -773,7 +848,8 @@ int main()
     else
     {
         cout << "\nPseudo Codes : \n\n";
-        a.ObjectModulePseudo(H); // convert to object module and save to a ".obj" file.
+        a.ObjectModulePseudo(H);
+        //a.objectModule(H);
         cout << "\n\n";
         cout << "ASSEMBLER : CODE CONVERTED SUCCESSFULLY!\n";
     }
