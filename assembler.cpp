@@ -39,35 +39,20 @@ typedef class Table2
     }
 } node2;
 
-// typedef class Table3 {
-//     public:
-//     string key3;
-//     int address;
-//     Table3 *next;
-
-//     Table3(string k, int v) {
-//         this->key3 = k;
-//         this->address = v;
-//         this->next = nullptr;
-//     }
-// }node3;
-
 class HashTable
 {
   public:
     node1 **Mneumonics; // MNEMONICS HASH TABLE
     node2 **regisTer;   // REGISTER HASH TABLE
-                        // node3 **pseudo_user; // pseudo operations and user defined table
+                        
     HashTable()
     {
         Mneumonics = new node1 *[Size];
         regisTer = new node2 *[Size];
-        //pseudo_user = new node3 *[Size];
         for (int i = 0; i < Size; i++)
         {
             Mneumonics[i] = NULL;
             regisTer[i] = NULL;
-            //pseudo_user[i] = NULL;
         }
     }
 
