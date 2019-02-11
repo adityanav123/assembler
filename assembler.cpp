@@ -5,6 +5,8 @@
 #include <sstream>
 #include <time.h>
 #include <unordered_map>
+#include <stdio.h>
+#include <ctime>
 // #include <bits/stdc++.h>
 using namespace std;
 #define Size 10
@@ -615,7 +617,7 @@ class Assembler
     }
 
     void ObjectModulePseudo(HashTable H)
-    { 
+    {
         string input;
         vector<string> v1;
         fstream f1;
@@ -638,9 +640,12 @@ class Assembler
                 result.push_back(s);
 
             string key = result[0];
+
             if (key.back() == ':')
             {
-                cout << key << locCtr << "\n";
+                string new_key = key;
+                new_key.resize(new_key.size() - 1);
+                cout << new_key << ", " << locCtr << "\n";
             }
 
             if (key == "START")
@@ -677,7 +682,7 @@ class Assembler
             {
                 if (isError == true)
                 {
-                    cout << result[1] << " Not declared in the Scope!\n";
+                    cout << result[1] << " was never defined in the program \n";
                 }
                 else
                     cout << result[1] << " " << indexes[result[1]] << "\n";
@@ -686,11 +691,7 @@ class Assembler
             {
                 locCtr += 4;
             }
-            else if (key == "MUL")
-            {
-                locCtr += 2;
-            }
-            else if (key == "MOV")
+            else if (key == "MUL" || key == "MOV")
             {
                 locCtr += 2;
             }
@@ -701,43 +702,54 @@ class Assembler
         }
     }
 
-    string decToBinary(int toConv) // decimal to binary conversion
+    // string decToBinary(int toConv) // decimal to binary conversion
+    // {
+    //     string binaryOut, revBinaryOut;
+    //     while (toConv >= 1)
+    //     {
+    //         if (toConv % 2 == 0)
+    //             binaryOut += "0";
+    //         else
+    //             binaryOut += "1";
+    //         toConv /= 2;
+    //     }
+    //     for (int i = binaryOut.length(); i >= 0; i--)
+    //     {
+    //         revBinaryOut += binaryOut[i];
+    //     }
+    //     return revBinaryOut;
+    // }
+
+    void date1()
     {
-        string binaryOut, revBinaryOut;
-        while (toConv >= 1)
-        {
-            if (toConv % 2 == 0)
-                binaryOut += "0";
-            else
-                binaryOut += "1";
-            toConv /= 2;
-        }
-        for (int i = binaryOut.length(); i >= 0; i--)
-        {
-            revBinaryOut += binaryOut[i];
-        }
-        return revBinaryOut;
+        time_t t = time(0);
+        tm *now = localtime(&t);
+        cout << (now->tm_year + 1900)
+             << (now->tm_mon + 1)
+             << now->tm_mday
+             << "` ";
     }
-    void objectModule(HashTable H)
+    void time1()
+    {
+        time_t now = time(0);
+        tm *ltm = localtime(&now);
+        cout << (ltm->tm_hour) << ltm->tm_min << ltm->tm_sec << "` ";
+    }
+    void objectFile(HashTable H)
     {
         string input;
         vector<string> v1;
         fstream f1;
         f1.open("AssemblyLanguage.txt");
-        //cout << f1 << "\n";
         while (f1)
         {
-            //cout << "co\n";
             getline(f1, input);
             v1.push_back(input);
-            //cout << input << "\n";
         }
         f1.close();
         for (vector<string>::iterator itr = v1.begin(); itr != v1.end(); itr++)
         {
-            string key;
-            fstream objFile;
-            objFile.open("assembler.obj");
+
             string opCode, operand1, operand2;
             int chhCount = 0;
             int locCtr;
@@ -746,7 +758,13 @@ class Assembler
             for (string s; iss >> s;)
                 result.push_back(s);
 
-            if (result[0].back() == ':')
+            string key = result[0];
+            string op1;
+            string op2, op3;
+
+            //cout << "key : " << key << "\n";
+
+            if (key.back() == ':')
             {
                 key = result[1];
             }
@@ -754,73 +772,125 @@ class Assembler
             if (key == "START")
             {
                 cout << "OBJ` ";
-                objFile << "OBJ` 15102018` 1530’ " << result[1] << "\n";
-                cout << "15102018` 1530’ " << result[1] << "\n";
+                date1();
+                time1();
+                cout << result[1] << "`\n";
             }
-            else if (key == "BYTE" || key == "WORD")
+            else if (key == "MOV")
             {
-                // convert to binary then print
-                string temp = result[2];
-                int x = (int)temp[1] - 48;
-                objFile << decToBinary(x) << "`\n";
-                cout << decToBinary(x) << "`\n";
-            }
-            else if (key == "ADD" || key == "MOV")
-            {
-                cout << H.retMachine_Code(key, 1) << "` ";
-                objFile << H.retMachine_Code(key, 1) << "` ";
+
                 if (key == result[1])
-                { // first operand
-                    // indexed value
-                    string temp = result[2];
-                    temp.resize(temp.size() - 1);
-
-                    if (temp.size() == 1)
-                    {
-                        // register
-                        cout << H.retBinCode(temp) << "` ";
-                        objFile << H.retBinCode(temp) << "` ";
-                    }
-                    else
-                    {
-                        cout << H.retNoofOperands(temp) << "` ";
-                        objFile << H.retNoofOperands(temp) << "` ";
-                    }
-                }
-                else if (key == result[0])
                 {
-                    string temp = result[1];
-                    temp.resize(temp.size() - 1);
-                    cout << H.retBinCode(temp) << "` ";
-                }
-
-                if (result[2][0] == '#')
-                {
-                    // immidiate operand
-                    string temp = result[2];
-                    int x = (int)temp[1] - 48;
-                    cout << decToBinary(x) << "`\n";
-                }
-                else if (result[2].size() == 1)
-                {
-                    // register
-                    cout << H.retBinCode(result[2]) << "`\n";
-                    objFile << H.retBinCode(result[2]) << "`\n";
+                    op1 = result[2];
+                    op2 = result[3];
                 }
                 else
                 {
-                    cout << H.retNoofOperands(result[2]) << "`\n";
-                    objFile << H.retNoofOperands(result[2]) << "`\n";
+                    op1 = result[1];
+                    op2 = result[2];
+                }
+                cout << H.retMachine_Code(key, 1) << "` ";
+
+                string new_op1 = op1;
+                new_op1.resize(new_op1.size() - 1);
+                if (new_op1.size() == 1)
+                {
+                    // register
+                    cout << H.retBinCode(new_op1) << "` ";
+                }
+                else
+                {
+                    // variable
+                    cout << H.retNoofOperands(new_op1) << "` ";
+                }
+                // 2nd operand
+                if (op2[0] == '#')
+                {
+                    // immidiate opearnd
+                    string new_op = op2;
+                    reverse(new_op.begin(), new_op.end());
+                    new_op.resize(new_op.size() - 1);
+                    int x = stoi(new_op);
+                    string binary = bitset<4>(x).to_string();
+                    cout << binary << "`\n";
+                }
+                else if (op2.size() == 1)
+                {
+                    // register
+                    cout << H.retBinCode(op2) << "`\n";
+                }
+                else
+                {
+                    // variable
+                    cout << H.retNoofOperands(op2) << "`\n";
                 }
             }
-
-            else if (key == "JUMP")
+            else if (key == "ADD" || key == "SUB")
             {
 
+                if (key == result[1])
+                {
+                    op1 = result[2];
+                    op2 = result[3];
+                }
+                else
+                {
+                    op1 = result[1];
+                    op2 = result[2];
+                }
                 cout << H.retMachine_Code(key, 1) << "` ";
-                objFile << H.retMachine_Code(key, 1) << "` ";
-                cout << indexes[result[1]] << "`\n";
-                objFile << indexes[result[1]] << "`\n";
+                string new_op = op1;
+                new_op.resize(new_op.size() - 1);
+
+                if (new_op.size() == 1)
+                {
+                    // register
+                    cout << H.retBinCode(new_op) << "` ";
+                }
+                else
+                {
+                    // variable
+                    cout << H.retNoofOperands(new_op) << "` ";
+                }
+
+                if (op2[0] == '#')
+                {
+                    // immidiate opearnd
+                    string new_op = op2;
+                    reverse(new_op.begin(), new_op.end());
+                    new_op.resize(new_op.size() - 1);
+                    int x = stoi(new_op);
+                    string binary = bitset<4>(x).to_string();
+                    cout << binary << "`\n";
+                }
+                else if (op2.size() == 1)
+                {
+                    // register
+                    cout << H.retBinCode(op2) << "`\n";
+                }
+                else
+                {
+                    // variable
+                    cout << H.retNoofOperands(op2) << "`\n";
+                }
+            }
+            else if (key == "JUMP")
+            {
+                cout << H.retMachine_Code(key, 1) << "` " << indexes[result[1]] << "`\n";
+            }
+            else if (key == "END")
+            {
+                return;
+            }
+            else if (key == "BYTE" || key == "RESW" || key == "RESB")
+            {
+
+                string new_val = result[2];
+                reverse(new_val.begin(), new_val.end());
+                new_val.resize(new_val.size() - 1);
+                int x = stoi(new_val);
+                string binary = bitset<4>(x).to_string();
+                cout << binary << "`\n";
             }
         }
     }
@@ -847,11 +917,15 @@ int main()
     }
     else
     {
-        cout << "\nPseudo Codes : \n\n";
-        a.ObjectModulePseudo(H);
-        //a.objectModule(H);
-        cout << "\n\n";
+        // cout << "\nPseudo Codes : \n\n";
+        // a.ObjectModulePseudo(H);
+        // cout << "\n\n";
         cout << "ASSEMBLER : CODE CONVERTED SUCCESSFULLY!\n";
+        cout << "OBJECT FILE \n \n\n\n";
+        a.objectFile(H);
+
+        //cout << "Time : \n";
+        //a.date1();
     }
     return 0;
 }
