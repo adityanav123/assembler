@@ -40,20 +40,35 @@ typedef class Table2
     }
 } node2;
 
+// typedef class Table3 {
+//     public:
+//     string key3;
+//     int address;
+//     Table3 *next;
+
+//     Table3(string k, int v) {
+//         this->key3 = k;
+//         this->address = v;
+//         this->next = nullptr;
+//     }
+// }node3;
+
 class HashTable
 {
   public:
     node1 **Mneumonics; // MNEMONICS HASH TABLE
     node2 **regisTer;   // REGISTER HASH TABLE
-                        
+                        // node3 **pseudo_user; // pseudo operations and user defined table
     HashTable()
     {
         Mneumonics = new node1 *[Size];
         regisTer = new node2 *[Size];
+        //pseudo_user = new node3 *[Size];
         for (int i = 0; i < Size; i++)
         {
             Mneumonics[i] = NULL;
             regisTer[i] = NULL;
+            //pseudo_user[i] = NULL;
         }
     }
 
@@ -724,7 +739,8 @@ class Assembler
     {
         string input;
         vector<string> v1;
-        fstream f1;
+        fstream f1, objFile;
+        objFile.open("assembler.obj");
         f1.open("AssemblyLanguage.txt");
         while (f1)
         {
@@ -757,9 +773,11 @@ class Assembler
             if (key == "START")
             {
                 cout << "OBJ` ";
+                objFile << "OBJ` "; 
                 date1();
                 time1();
                 cout << result[1] << "`\n";
+                objFile << result[1] << "`\n";
             }
             else if (key == "MOV")
             {
@@ -775,6 +793,7 @@ class Assembler
                     op2 = result[2];
                 }
                 cout << H.retMachine_Code(key, 1) << "` ";
+                objFile << H.retMachine_Code(key, 1) << "` ";
 
                 string new_op1 = op1;
                 new_op1.resize(new_op1.size() - 1);
@@ -782,11 +801,13 @@ class Assembler
                 {
                     // register
                     cout << H.retBinCode(new_op1) << "` ";
+                    objFile << H.retBinCode(new_op1) << "` ";
                 }
                 else
                 {
                     // variable
                     cout << H.retNoofOperands(new_op1) << "` ";
+                    objFile << H.retNoofOperands(new_op1) << "` ";
                 }
                 // 2nd operand
                 if (op2[0] == '#')
@@ -798,16 +819,19 @@ class Assembler
                     int x = stoi(new_op);
                     string binary = bitset<4>(x).to_string();
                     cout << binary << "`\n";
+                    objFile << binary << "`\n";
                 }
                 else if (op2.size() == 1)
                 {
                     // register
                     cout << H.retBinCode(op2) << "`\n";
+                    objFile << H.retBinCode(op2) << "`\n";
                 }
                 else
                 {
                     // variable
                     cout << H.retNoofOperands(op2) << "`\n";
+                    objFile << H.retNoofOperands(op2) << "`\n";
                 }
             }
             else if (key == "ADD" || key == "SUB")
@@ -824,6 +848,7 @@ class Assembler
                     op2 = result[2];
                 }
                 cout << H.retMachine_Code(key, 1) << "` ";
+                objFile << H.retMachine_Code(key, 1) << "` ";
                 string new_op = op1;
                 new_op.resize(new_op.size() - 1);
 
@@ -831,11 +856,13 @@ class Assembler
                 {
                     // register
                     cout << H.retBinCode(new_op) << "` ";
+                    objFile << H.retBinCode(new_op) << "` ";
                 }
                 else
                 {
                     // variable
                     cout << H.retNoofOperands(new_op) << "` ";
+                    objFile << H.retNoofOperands(new_op) << "` ";
                 }
 
                 if (op2[0] == '#')
@@ -847,21 +874,25 @@ class Assembler
                     int x = stoi(new_op);
                     string binary = bitset<4>(x).to_string();
                     cout << binary << "`\n";
+                    objFile << binary << "\n";
                 }
                 else if (op2.size() == 1)
                 {
                     // register
                     cout << H.retBinCode(op2) << "`\n";
+                    objFile << H.retBinCode(op2) << "`\n";
                 }
                 else
                 {
                     // variable
                     cout << H.retNoofOperands(op2) << "`\n";
+                    objFile << H.retNoofOperands(op2) << "`\n";
                 }
             }
             else if (key == "JUMP")
             {
                 cout << H.retMachine_Code(key, 1) << "` " << indexes[result[1]] << "`\n";
+                objFile << H.retMachine_Code(key, 1) << "` " << indexes[result[1]] << "`\n";
             }
             else if (key == "END")
             {
@@ -876,8 +907,12 @@ class Assembler
                 int x = stoi(new_val);
                 string binary = bitset<4>(x).to_string();
                 cout << binary << "`\n";
+                objFile << binary << "`\n";
             }
         }
+
+        objFile.close();
+        f1.close();
     }
 };
 
