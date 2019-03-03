@@ -1,0 +1,208 @@
+// pseudo Code for 2 pass assembler //
+class Mnemonics_Table
+begin 
+	declare machineCode, no_of_opearands, instruction_size
+end
+
+class RegisterTable 
+begin 
+	declare register, binary_representation 
+end 
+
+class hashTable 
+begin 
+	declaring both hashtables to nullptr using constructor
+	
+
+	function insert_Mnemonics(string opCode, int machine_Code, int noOfOperands, int instruction_size) {
+		int index = HashFunction (opCode);
+	
+		insert the opcode in the table at the index position
+	}
+	function insert_register(string registerName, string binary_representation_of_register) {
+		int index = HashFunction (register);
+	
+		insert the register_name into the table at index position
+	}
+	function hashFunction(string register/Opcode) {
+		take the starting charecter of the argument passed to the function and convert to integer
+		return the mod 10 value of the above integer 
+	}
+	function search_hash (string key) {
+		calculate index using hash function 
+		traverse to the index hash table bucket
+
+		if key found in the bucket	return 1;
+		else 	return 0;
+	}
+	function string_length(char *input) {
+		if(*input == '\0') {
+			return 0;	
+		}
+		else {
+			return ( 1 + string_length(input + 1) );
+		}
+	}
+	function return_machine_code(string key) {
+		calculate index using hash function 
+		traverse to the bucket
+		if key found in the bucket 
+			return machine_code
+		else return -1	
+ 	}
+	function return_binary_code {
+		calculate index using hash function 
+		traverse to the bucket
+		if key found in the bucket 
+			return (int)(binary_code);
+	}
+	function return_noOfOperands {
+		// same traversal to bucket as above // 
+		if key found in the bucket 
+			return (int)(noOfOperands);
+	}	
+	
+
+	friend class assembler, htwrapper
+	friend function insertTableValues {
+		insert all the default values in the mnemonics and register table
+	}
+
+end 
+
+
+class htwrapper
+begin 
+	declare filestream f1, f2
+	
+	function saveTable {
+		open the file location
+		save the hash table line by line
+		close file
+	}	
+	
+	function viewTable {
+		open file
+		view table from the file line by line 
+		close file
+	}
+end 
+
+
+class assembler 
+begin 
+	open file in which assembly program is stored
+	
+	function firstPass {
+		read code line by line from file 
+		
+		sparse the string dividing opcode and operands
+		
+		check for user defined variables and jump instructions 
+		if found
+			store the addresses of jump locations and user defined variables
+	}
+	
+	function secondPass {
+		call firstPass()
+		
+		read code line by line  
+		parse the read line into opCode and operands
+		
+		check that opCode is present in the opCode table or not.
+		
+		if found
+			if check_no_of_operands = true:
+				if is_variable = true:
+					check for validity of variable
+						if valid_variable = false
+							errorType = 4
+							call errorHandler(errorType, lineNumber)
+						else continue:
+			else if check_no_of_operands = false:
+				errorType = 1
+				call errorHandler(errorType, lineNumber)
+		else if not found 
+			errorType = 3
+			call errorHandler(errorType, lineNumber)
+		
+		if key = 'JUMP':
+			if index not found
+				errorType = 2
+				errorHandler(errorType, lineNumber)
+		
+	}
+	
+	function errorHandler(argument errorType, argument lineNumber) {
+		
+		if errorType = 1
+			print lineNumber + 'invalid number of operands'
+		else if errorType = 2
+			print lineNumber + 'index not defined'
+		else if errorType = 3
+			print lineNumber + 'opCode not defined'
+		else if errorType = 4
+			print lineNumber + 'Variable not defined'	
+	}
+	
+	function objectModulePseudo {
+		open file containing assembly language code
+		
+		read line by line code
+		
+		parsing each line and checking for pseudoCodes
+		if pseudoCode = 'START' 
+			location_counter recorded
+		else 
+			location_counter incremented as per opCode
+		else 
+			when opCode = 'JUMP'
+				print jump to address
+		similarly printing other addresses for indexes and variables
+		file close 
+	}
+	function date1 {
+		returns current_system_date
+	}
+
+	function time1 {
+		returns current_system_time
+	}
+
+	function object_module_code {
+		file open containing assembly language code
+		
+		reading each line 
+		parsing each line into opCode and operands
+		
+		if opCode = 'START'
+			print 'OBJ`' + call date1() + call time1() + location
+		else 	
+			print machine_code of opCode
+			if operand is variable = true:
+				print physical_address of variable
+			else operand is immidiate opearnd
+				print binary_equivalent of value
+			else operand is register 
+				print call retBinaryCode(register_name)  
+	}
+end	
+
+In the main function {
+	
+	declare objects for HashTable - 'H' , HTWrapper - 'htw' , Assembler - 'a'
+	
+	call insertHashtableValues(H)
+	
+	call htw.saveTables(H) - saving table in the file
+	
+	call a.readCode(H) - reading the Code and Validate it 
+		
+	if a.isError = true ( Checks if code is validated or not )
+		print 'Code cannot be converted'
+		show errors
+		print a.ObjectModulePseudo()
+	else if a.isError = false
+		print 'Code Converted Successfully!'
+		print a.object_module_code()
+}			
