@@ -10,4 +10,4 @@ Using 3 classes
  - Creation Of Object Module 
  - Creation of Object Code for Pseudo Codes 
  - Validation Of Assembly Language Code in 8086.
- 
+ - Pseudo Code 
