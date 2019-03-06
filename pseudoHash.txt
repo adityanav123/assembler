@@ -1,2 +1,116 @@
 // pseudo code for hash table
 
+size of hash table = 10
+define template by 2 typenames - k, v
+implicit declaration of class htwrapper
+
+class node <template>
+begin 
+	K key, V Value, node *next_node_pointer
+	constructor()
+end
+
+class Hash <template>
+begin 
+	node<k,v> **bucket_array;
+
+	intialising each array to null 
+	
+	function hashFunction(k key) {
+		return int(key) % 10;
+	}
+	
+	function insertHash(k key, v value) {
+		find index by hashkey function 
+		traverse to bucket_array[index]
+		store the element by linked list
+	}
+	
+	function deleteHashValue(k key) {
+		find index via hash function 
+		travese to bucket_array[index]
+		
+		find the element in the linked list and erase its link to delete the node
+	}
+
+	function returnRecord(k key) {
+		found = 0 // intially not found 
+		find index = hashFunction(key)
+		*pointer to bucket_array[index]
+		traverse the linked list using *pointer
+		if found
+			found = 1
+			return value
+		
+		if found = 0 :  return -1
+	}
+		
+	function replaceRecord(k key) {
+		flag = 0 - for value to be replaced
+		*pointer = bucket_array[index]
+		if element found in the linked list:
+			take input from user for the replacing value
+			replace the record node
+			flag = 1
+
+		if flag = 0
+			print console = 'element not found'
+			return
+	}
+
+	function printHashTable() {
+		index = 0
+		*pointer = bucket_array[index]
+		while *pointer != null:
+			print - key & value pair , traversing the whole linked list
+			pointer -> next
+	}
+	
+	function hasKey(k key) {
+		flag = 0 - for searching key in hash table 
+		find index using hashFunction
+		*pointer = bucket_array[index]
+		if element_found by traversing the linked list:
+			flag = 1
+		else: flag = 0
+		return flag
+	}
+
+
+	friend class htwrapper<k,v> 
+end 
+
+
+class htwrapper <template>
+begin
+	function storeHash() {
+		open file to store hash table
+		index = 0
+		*pointer = bucket_array[index]
+		while pointer != null 
+			store key value pair in file
+			pointer -> next
+		
+		close file
+	}
+
+	function checkFromFile() {
+		open file containing hash table 
+		read and print line by line 		
+	}
+end 
+
+
+main function() {
+	hashtable object
+	insert hashtable values
+	
+	print hashtable
+	
+	htwrapper object 
+	store hash table 
+	
+	checking hash table from file
+}
+
+
